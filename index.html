@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Track your daily expenses with voice input, reports, and goals">
+    <title>Money Tracker</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="msapplication-TileColor" content="#6366f1">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Money Tracker">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="header-title">💰 Money Tracker</h1>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Dashboard Section -->
+        <section class="section active" id="dashboard">
+            <div class="section-header">
+                <h2>Dashboard</h2>
+                <span class="date-display" id="currentDate"></span>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card today">
+                    <div class="stat-label">Today's Spending</div>
+                    <div class="stat-value" id="todayTotal">₹0</div>
+                </div>
+                <div class="stat-card month">
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-value" id="monthTotal">₹0</div>
+                </div>
+            </div>
+
+            <div class="target-progress" id="targetProgressContainer">
+                <div class="progress-header">
+                    <span>Monthly Target</span>
+                    <span id="targetProgressText">Not Set</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="targetProgressFill"></div>
+                </div>
+            </div>
+
+            <div class="recent-expenses">
+                <h3>Recent Expenses</h3>
+                <div class="expense-list" id="recentExpensesList">
+                    <p class="empty-state">No expenses yet. Add your first expense!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Expense Section -->
+        <section class="section" id="addExpense">
+            <div class="section-header">
+                <h2>Add Expense</h2>
+            </div>
+
+            <div class="voice-input-container">
+                <button class="voice-btn" id="voiceBtn" aria-label="Voice input">
+                    <span class="mic-icon">🎤</span>
+                    <span>Tap to Speak</span>
+                </button>
+                <div class="voice-status" id="voiceStatus"></div>
+            </div>
+
+            <form class="expense-form" id="expenseForm">
+                <div class="form-group">
+                    <label for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" step="0.01" min="0" required placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" required>
+                        <option value="">Select Category</option>
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Bills & Utilities">Bills & Utilities</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" placeholder="What did you spend on?">
+                </div>
+
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod" required>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI (PhonePe/Google Pay/Paytm)</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="Online Banking">Online Banking</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="expenseDate">Date</label>
+                    <input type="date" id="expenseDate" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Expense</button>
+            </form>
+        </section>
+
+        <!-- Daily Report Section -->
+        <section class="section" id="dailyReport">
+            <div class="section-header">
+                <h2>Daily Report</h2>
+                <input type="date" id="dailyReportDate" class="date-picker">
+            </div>
+
+            <div class="report-summary">
+                <div class="summary-card">
+                    <div class="summary-label">Total Spent</div>
+                    <div class="summary-value" id="dailyTotal">₹0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Number of Expenses</div>
+                    <div class="summary-value" id="dailyCount">0</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>By Category</h3>
+                <canvas id="dailyCategoryChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>By Time of Day</h3>
+                <canvas id="dailyTimeChart"></canvas>
+            </div>
+
+            <div class="expense-list" id="dailyExpensesList"></div>
+        </section>
+
+        <!-- Monthly Report Section -->
+        <section class="section" id="monthlyReport">
+            <div class="section-header">
+                <h2>Monthly Report</h2>
+                <input type="month" id="monthlyReportMonth" class="month-picker">
+            </div>
+
+            <div class="report-summary">
+                <div class="summary-card">
+                    <div class="summary-label">Total Spent</div>
+                    <div class="summary-value" id="monthlyTotal">₹0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Monthly Target</div>
+                    <div class="summary-value" id="monthlyTargetDisplay">Not Set</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Remaining</div>
+                    <div class="summary-value" id="monthlyRemaining">-</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Daily Spending Trend</h3>
+                <canvas id="monthlyTrendChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Category Breakdown</h3>
+                <canvas id="monthlyCategoryChart"></canvas>
+            </div>
+
+            <div class="top-categories">
+                <h3>Top Spending Categories</h3>
+                <div id="topCategoriesList"></div>
+            </div>
+        </section>
+
+        <!-- Goals & Targets Section -->
+        <section class="section" id="goalsTargets">
+            <div class="section-header">
+                <h2>Goals & Targets</h2>
+            </div>
+
+            <div class="targets-container">
+                <div class="target-card">
+                    <h3>Monthly Spending Limit</h3>
+                    <div class="target-form">
+                        <input type="number" id="monthlyTargetInput" placeholder="Enter amount" min="0">
+                        <button class="btn btn-secondary" id="setMonthlyTarget">Set Target</button>
+                    </div>
+                    <div class="target-display" id="monthlyTargetDisplayCard">
+                        <p>No monthly target set</p>
+                    </div>
+                </div>
+
+                <div class="goal-card">
+                    <h3>Savings Goal</h3>
+                    <form class="goal-form" id="goalForm">
+                        <div class="form-group">
+                            <label for="goalAmount">Target Amount (₹)</label>
+                            <input type="number" id="goalAmount" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="goalDate">Target Date</label>
+                            <input type="date" id="goalDate" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Set Goal</button>
+                    </form>
+                    <div class="goal-display" id="goalDisplay">
+                        <p>No savings goal set</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="section" id="settings">
+            <div class="section-header">
+                <h2>Settings</h2>
+            </div>
+
+            <div class="settings-container">
+                <div class="setting-item">
+                    <label for="reminderTime">Daily Reminder Time</label>
+                    <input type="time" id="reminderTime">
+                    <button class="btn btn-secondary" id="saveReminderTime">Save</button>
+                </div>
+
+                <div class="setting-item">
+                    <h3>Install App</h3>
+                    <button class="btn btn-primary" id="installBtn" style="display: none;">Install App</button>
+                    <p id="installStatus" style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+                        Install this app on your device for a better experience
+                    </p>
+                </div>
+
+                <div class="setting-item">
+                    <h3>Data Management</h3>
+                    <button class="btn btn-secondary" id="exportData">Export Data</button>
+                    <button class="btn btn-secondary" id="importData">Import Data</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button class="btn btn-danger" id="clearData">Clear All Data</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-section="dashboard">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" data-section="addExpense">
+            <span class="nav-icon">➕</span>
+            <span class="nav-label">Add</span>
+        </button>
+        <button class="nav-item" data-section="dailyReport">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Daily</span>
+        </button>
+        <button class="nav-item" data-section="monthlyReport">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Monthly</span>
+        </button>
+        <button class="nav-item" data-section="goalsTargets">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-label">Goals</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/pwa.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
